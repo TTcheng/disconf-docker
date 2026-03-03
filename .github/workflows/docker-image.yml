@@ -1,0 +1,52 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+    tags: ["*"]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    # 步骤1：拉取仓库代码
+    - name: Build the Docker image
+      uses: actions/checkout@v4
+
+    # 步骤2：设置Docker Buildx（增强Docker构建能力）
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # 步骤3：登录Docker Hub（替换为你的镜像仓库）
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}  # GitHub Secrets中配置的Docker Hub用户名
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}     # GitHub Secrets中配置的Docker Hub访问令牌
+
+    # 步骤4：提取镜像标签（分支名/标签名）
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        # 替换为你的Docker Hub用户名和仓库名
+        images: ttcheng/disconf
+        # 标签规则：main分支打latest标签，标签打对应版本标签
+        tags: |
+          type=ref,event=branch
+          type=ref,event=tag
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
+
+    # 步骤5：构建并推送Docker镜像
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .  # 构建上下文（项目根目录）
+        push: true   # 推送镜像到仓库
+        tags: ${{ steps.meta.outputs.tags }}  # 镜像标签
+        labels: ${{ steps.meta.outputs.labels }}  # 镜像标签
