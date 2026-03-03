@@ -18,6 +18,11 @@ jobs:
     - name: Build the Docker image
       uses: actions/checkout@v4
 
+    - name: Remove docker.1ms.run/ prefix from Dockerfile
+      run: |
+        sed -i 's/docker.1ms.run\///g' ./Dockerfile
+        cat ./Dockerfile
+        
     # 步骤2：设置Docker Buildx（增强Docker构建能力）
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
