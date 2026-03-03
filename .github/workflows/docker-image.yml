@@ -17,11 +17,6 @@ jobs:
     # 步骤1：拉取仓库代码
     - name: Build the Docker image
       uses: actions/checkout@v4
-
-    - name: Remove docker.1ms.run/ prefix from Dockerfile
-      run: |
-        sed -i 's/docker.1ms.run\///g' ./Dockerfile
-        cat ./Dockerfile
         
     # 步骤2：设置Docker Buildx（增强Docker构建能力）
     - name: Set up Docker Buildx
@@ -52,6 +47,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .  # 构建上下文（项目根目录）
+        file: ./DockerfileUS
         push: true   # 推送镜像到仓库
         tags: ${{ steps.meta.outputs.tags }}  # 镜像标签
         labels: ${{ steps.meta.outputs.labels }}  # 镜像标签
