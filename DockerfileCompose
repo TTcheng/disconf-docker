@@ -33,7 +33,7 @@ RUN echo 'export JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk' >> /etc/profile && \
     echo '#jdk8' >> /etc/profile
 
 RUN java -version
-ENV BUILD_DIR=/workspace/disconf
+ENV BUILD_DIR=/workspace
 ENV ONLINE_CONFIG_PATH=/disconf/conf
 ENV WAR_ROOT_PATH=/disconf
 
@@ -50,12 +50,11 @@ RUN git clone https://gitee.com/mirrors/disconf.git && \
     source /etc/profile && \
     sh deploy/deploy.sh
 
-FROM docker.1ms.run/library/tomcat:9.0.115-jdk8 AS production
+FROM docker.1ms.run/library/tomcat:9.0.115-jdk8 AS backend
 
 RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/ubuntu.sources && \
     sed -i 's/security.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/ubuntu.sources && \
     apt-get update && \
-    apt-get install -y nginx && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -64,8 +63,15 @@ RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/source
 RUN mkdir $CATALINA_HOME/webapps/ROOT
 COPY --from=builder --chown=root:root /disconf/disconf-web.war $CATALINA_HOME/webapps/ROOT
 RUN cd $CATALINA_HOME/webapps/ROOT && jar xvf disconf-web.war && rm disconf-web.war
+CMD ["catalina.sh", "run"]
 
-RUN groupadd nginx && useradd nginx -g nginx
+FROM docker.1ms.run/library/nginx:stable-alpine AS frontend
 COPY --from=builder --chown=nginx:nginx /disconf/html /usr/share/nginx/html
 
-CMD ["/bin/sh","-c","nginx && catalina.sh run"]
+FROM docker.1ms.run/library/mysql:5.7-debian AS database
+COPY --from=builder --chown=mysql:mysql /workspace/disconf/disconf-web/sql /docker-entrypoint-initdb.d
+RUN cd /docker-entrypoint-initdb.d && mv 201512/20151225.sql 3-patch1.sql && mv 20160701/20160701.sql 4-patch2.sql
+#RUN cd /docker-entrypoint-initdb.d && mkdir -p init-disconf && mv *.sql init-disconf
+#RUN cd /docker-entrypoint-initdb.d && echo "#!/bin/sh \
+#cd /docker-entrypoint-initdb.d \
+#mysql < init-disconf/*.sql" > init-disconf.sh
