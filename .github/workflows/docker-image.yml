@@ -11,7 +11,7 @@ jobs:
 
   build:
 
-    runs-on: gxy
+    runs-on: [self-hosted, X64]
 
     steps:
     # 步骤1：拉取仓库代码
