@@ -11,7 +11,7 @@ jobs:
 
   build:
 
-    runs-on: [self-hosted, X64]
+    runs-on: ubuntu-latest
 
     steps:
     # 步骤1：拉取仓库代码
