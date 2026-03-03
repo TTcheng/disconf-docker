@@ -15,8 +15,11 @@ jobs:
 
     steps:
     # 步骤1：拉取仓库代码
-    - name: Build the Docker image
+    - name: Checkout repository
       uses: actions/checkout@v4
+      # 关键：标签推送时需要拉取完整历史，否则可能解析不到标签信息
+      with:
+        fetch-depth: 0
         
     # 步骤2：设置Docker Buildx（增强Docker构建能力）
     - name: Set up Docker Buildx
@@ -38,8 +41,8 @@ jobs:
         images: ttcheng/disconf
         # 标签规则：main分支打latest标签，标签打对应版本标签
         tags: |
-          type=ref,event=branch
-          type=ref,event=tag
+          type=semver,pattern={{version}},event=tag
+          type=semver,pattern={{major}}.{{minor}},event=tag
           type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
 
     # 步骤5：构建并推送Docker镜像
