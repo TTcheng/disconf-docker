@@ -13,7 +13,9 @@ docker cmopose up -d
 docker compose down
 ```
 
-Note: 如果要正式部署，建议修改默认密码，挂载数据卷以保留数据，
+启动完成后访问http://localhost:8081/，默认用户名密码admin/admin。
+
+Note: 如果要正式部署，建议修改配置文件中各组件的默认密码，挂载数据卷以保留数据，
 
 ## 前后端合一的单镜像（建议生产）
 
